@@ -87,7 +87,8 @@ export function ConnectForm({ onConnected }: Props) {
               />
               <TextInput
                 label="Region (optional)"
-                placeholder="ap-northeast-1"
+                description="Detected automatically; only fill in for a custom S3-compatible endpoint"
+                placeholder="auto"
                 value={region}
                 onChange={(e) => setRegion(e.currentTarget.value)}
                 spellCheck={false}
