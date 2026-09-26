@@ -111,8 +111,10 @@ class S3Service:
         Ask S3 which region hosts the bucket, so users never have to know it.
 
         S3 returns the `x-amz-bucket-region` header on HeadBucket even when the request is
-        signed for the wrong region (301) or lacks permission (403). Only a missing bucket
-        (404) or bad credentials come back without it. Custom endpoints (dev mock) skip this.
+        signed for the wrong region (301) or lacks permission (403). A missing bucket or bad
+        credentials come back without it; HEAD responses carry no error body, so in that
+        case we return None and let `validate()` (ListObjectsV2, which does have a body)
+        produce the precise error. Custom endpoints (dev mock) skip detection.
         """
         if self._creds.endpoint_url or settings.S3_ENDPOINT_URL:
             return None
@@ -121,8 +123,6 @@ class S3Service:
             headers = resp.get("ResponseMetadata", {}).get("HTTPHeaders", {})
         except ClientError as exc:
             headers = exc.response.get("ResponseMetadata", {}).get("HTTPHeaders", {})
-            if not headers.get("x-amz-bucket-region"):
-                raise _translate(exc) from None
         except Exception as exc:  # noqa: BLE001
             raise _translate(exc) from None
         return headers.get("x-amz-bucket-region") or None
