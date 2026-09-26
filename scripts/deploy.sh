@@ -10,7 +10,7 @@ for v in OPENROUTER_API_KEY FERNET_KEY DJANGO_SECRET_KEY DOMAIN; do
     || { echo ".env: $v is not set"; exit 1; }
 done
 
-git pull --ff-only
+git fetch -q origin && git reset -q --hard origin/main
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans
 docker image prune -f >/dev/null
 

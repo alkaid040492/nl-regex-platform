@@ -30,7 +30,7 @@ if command -v ufw >/dev/null 2>&1; then
 fi
 
 if [ -d "$DIR/.git" ]; then
-  echo ">> updating $DIR"; git -C "$DIR" pull --ff-only
+  echo ">> updating $DIR"; git -C "$DIR" fetch -q origin && git -C "$DIR" reset -q --hard origin/main
 else
   echo ">> cloning into $DIR"; git clone "$REPO" "$DIR"
 fi

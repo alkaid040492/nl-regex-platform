@@ -352,7 +352,7 @@ Error codes you will see: `VALIDATION_ERROR`, `INVALID_CREDENTIALS`, `ACCESS_DEN
 docker compose exec web pytest -q
 ```
 
-57 tests, ~30 s (a local SparkSession is started once per session):
+59 tests, ~35 s (a local SparkSession is started once per session):
 
 | File | Covers |
 |---|---|
