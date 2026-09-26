@@ -74,8 +74,9 @@ Useful URLs while developing:
 
 ## 2. How it works
 
-1. **Connect** — the user enters Access Key, Secret Key and bucket. The API validates them
-   against S3 (`ListObjectsV2` with `MaxKeys=1`), encrypts them with Fernet and stores them
+1. **Connect** — the user enters Access Key, Secret Key and bucket. The API detects the
+   bucket's region (`HeadBucket` → `x-amz-bucket-region`, so users never have to know it),
+   validates access (`ListObjectsV2` with `MaxKeys=1`), encrypts the credentials with Fernet and stores them
    in Redis under a random `connection_id` with a 2-hour TTL. The response carries only the
    id and the last 4 characters of the key.
 2. **Pick a file** — the API lists `.csv/.xlsx/.xls` objects and, for the chosen one, reads
@@ -276,7 +277,7 @@ The brief asks that credentials are never logged, returned, or stored in plain t
 | API responses | The serializer marks `secret_key` `write_only`; responses include only `access_key_hint` (`****ABCD`). |
 | Logs | `SecretMaskingFilter` on every handler masks `AKIA…` ids, 40-char secret-shaped strings, `secret_key=…` pairs and OpenRouter keys. `S3Credentials.__repr__` never shows the secret, so tracebacks are safe. |
 | Spark | Credentials are attached per bucket (`fs.s3a.bucket.<name>.access.key`) and removed after the job; `fs.s3a.impl.disable.cache=true` prevents Hadoop from caching a FileSystem bound to another user's keys. |
-| Least privilege | Only `ListObjectsV2`, `HeadObject`, `GetObject` are ever called. |
+| Least privilege | Only `HeadBucket`, `ListObjectsV2`, `HeadObject`, `GetObject` are ever called. |
 | Errors | Invalid key / wrong bucket / no permission / unreachable endpoint each map to a distinct code (`INVALID_CREDENTIALS`, `BUCKET_NOT_FOUND`, `ACCESS_DENIED`, `NETWORK_ERROR`) with a plain-language message. |
 
 ---
@@ -406,7 +407,7 @@ The public demo runs on a single 8 GB / 4 vCPU Ubuntu VM with Docker:
 # on the server (root, Ubuntu 24.04):
 curl -fsSL https://raw.githubusercontent.com/alkaid040492/nl-regex-platform/main/scripts/server_setup.sh | bash
 # from your machine: copy a filled-in .env (OPENROUTER_API_KEY, FERNET_KEY, DJANGO_SECRET_KEY,
-#                    DJANGO_ALLOWED_HOSTS=<domain>, DOMAIN=<domain>, ACME_EMAIL, DJANGO_DEBUG=0)
+#                    DJANGO_ALLOWED_HOSTS=<domain>, DOMAIN=<domain>, DJANGO_DEBUG=0)
 scp .env root@<server>:/opt/nl-regex-platform/.env
 # on the server:
 /opt/nl-regex-platform/scripts/deploy.sh      # re-run any time to pull + rebuild + restart

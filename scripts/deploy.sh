@@ -5,7 +5,7 @@ DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$DIR"
 
 [ -f .env ] || { echo "missing $DIR/.env (copy from .env.example and fill in)"; exit 1; }
-for v in OPENROUTER_API_KEY FERNET_KEY DJANGO_SECRET_KEY DOMAIN ACME_EMAIL; do
+for v in OPENROUTER_API_KEY FERNET_KEY DJANGO_SECRET_KEY DOMAIN; do
   grep -qE "^$v=.+" .env && ! grep -qE "^$v=(REPLACE_ME|change-me|sk-or-v1-\.\.\.|you@example.com)" .env \
     || { echo ".env: $v is not set"; exit 1; }
 done

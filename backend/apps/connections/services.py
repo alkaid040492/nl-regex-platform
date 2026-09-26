@@ -106,12 +106,34 @@ class S3Service:
         return self._creds.bucket
 
     # -- connection --------------------------------------------------------
+    def detect_region(self) -> str | None:
+        """
+        Ask S3 which region hosts the bucket, so users never have to know it.
+
+        S3 returns the `x-amz-bucket-region` header on HeadBucket even when the request is
+        signed for the wrong region (301) or lacks permission (403). Only a missing bucket
+        (404) or bad credentials come back without it. Custom endpoints (dev mock) skip this.
+        """
+        if self._creds.endpoint_url or settings.S3_ENDPOINT_URL:
+            return None
+        try:
+            resp = self._client.head_bucket(Bucket=self.bucket)
+            headers = resp.get("ResponseMetadata", {}).get("HTTPHeaders", {})
+        except ClientError as exc:
+            headers = exc.response.get("ResponseMetadata", {}).get("HTTPHeaders", {})
+            if not headers.get("x-amz-bucket-region"):
+                raise _translate(exc) from None
+        except Exception as exc:  # noqa: BLE001
+            raise _translate(exc) from None
+        return headers.get("x-amz-bucket-region") or None
+
     def validate(self) -> None:
         """Raise a ConnectionError_ subclass if the credentials/bucket are unusable."""
         try:
             self._client.list_objects_v2(Bucket=self.bucket, MaxKeys=1)
         except Exception as exc:  # noqa: BLE001
             raise _translate(exc) from None
+
 
     # -- listing -----------------------------------------------------------
     def list_files(self, prefix: str = "") -> list[S3File]:
@@ -179,6 +201,15 @@ class S3Service:
         columns = [{"name": str(c), "dtype": _guess_dtype(df[c])} for c in df.columns]
         sample = df.head(5).astype(str).to_dict(orient="records")
         return SchemaPreview(columns=columns, sample_rows=sample, sampled_rows=int(len(df)))
+
+
+def connect(creds: S3Credentials) -> S3Credentials:
+    """Resolve the bucket's real region, verify access, and return credentials pinned to that region."""
+    region = S3Service(creds).detect_region()
+    if region and region != creds.region:
+        creds = S3Credentials(**{**creds.__dict__, "region": region})
+    S3Service(creds).validate()
+    return creds
 
 
 def _guess_dtype(series: pd.Series) -> str:

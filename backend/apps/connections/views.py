@@ -10,7 +10,7 @@ from rest_framework.response import Response
 
 from . import store
 from .serializers import ConnectionCreateSerializer, FileListQuerySerializer, SchemaQuerySerializer
-from .services import S3Service
+from .services import S3Service, connect
 from .store import S3Credentials
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def create_connection(request):
         region=data["region"] or settings.AWS_DEFAULT_REGION,
         endpoint_url=settings.S3_ENDPOINT_URL,
     )
-    S3Service(creds).validate()  # raises a typed AppError on failure
+    creds = connect(creds)  # detects the bucket's region; raises a typed AppError on failure
     connection_id, expires_at = store.save(creds)
     logger.info("S3 connection established bucket=%s key_hint=%s", creds.bucket, creds.access_key_hint)
     return Response(

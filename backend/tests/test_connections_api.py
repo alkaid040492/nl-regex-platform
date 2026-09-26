@@ -99,3 +99,30 @@ def test_log_masking():
     masked = mask(line)
     assert "AKIAIOSFODNN7EXAMPLE" not in masked
     assert "wJalrXUtnFEMI" not in masked
+
+
+def test_connect_detects_bucket_region(s3):
+    """A bucket in eu-west-1 is found even though the user gave (or defaulted to) another region."""
+    import boto3
+
+    from apps.connections.services import connect
+
+    boto3.client("s3", region_name="eu-west-1").create_bucket(
+        Bucket="far-away", CreateBucketConfiguration={"LocationConstraint": "eu-west-1"}
+    )
+    creds = S3Credentials(access_key="testing", secret_key="testing", bucket="far-away", region="us-east-1")
+    resolved = connect(creds)
+    assert resolved.region == "eu-west-1"
+    assert resolved.bucket == "far-away" and resolved.secret_key == "testing"
+
+
+def test_connect_missing_bucket_still_typed_error():
+    from moto import mock_aws
+
+    from apps.connections.exceptions import BucketNotFound
+    from apps.connections.services import connect
+
+    with mock_aws():
+        creds = S3Credentials(access_key="testing", secret_key="testing", bucket="does-not-exist", region="us-east-1")
+        with pytest.raises(BucketNotFound):
+            connect(creds)

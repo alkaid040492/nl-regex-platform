@@ -1,7 +1,5 @@
-{
-	email {$ACME_EMAIL}
-}
-
+# ACME contact email is optional; set ACME_EMAIL in .env and add `email {$ACME_EMAIL}` inside
+# a global block if you want Let's Encrypt expiry reminders.
 {$DOMAIN} {
 	encode gzip
 	reverse_proxy frontend:80
