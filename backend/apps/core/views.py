@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 
 from django.db import connection
-from django.db.models import Avg, Count, F
+from django.db.models import Avg, Count, F, Sum
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -73,7 +73,7 @@ def metrics_summary(request):
             "jobs_by_status": {s.value: by_status.get(s.value, 0) for s in Job.Status},
             "avg_success_duration_seconds": avg_duration.total_seconds() if avg_duration else None,
             "rows_processed_total": Job.objects.filter(status=Job.Status.SUCCESS)
-            .aggregate(total=Count("row_count"))["total"],
+            .aggregate(total=Sum("row_count"))["total"] or 0,
             "llm_cache": {"hits": cache_hits, "misses": cache_misses},
         }
     )

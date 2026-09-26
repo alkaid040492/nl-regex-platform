@@ -403,11 +403,19 @@ docker compose run --rm -v "$PWD/scripts/out:/sample:ro" s3-seed
 The public demo runs on a single 8 GB / 4 vCPU Ubuntu VM with Docker:
 
 ```bash
-git clone https://github.com/alkaid040492/nl-regex-platform.git && cd nl-regex-platform
-cp .env.example .env            # set OPENROUTER_API_KEY, FERNET_KEY, DJANGO_SECRET_KEY,
-                                # DJANGO_ALLOWED_HOSTS=<your-domain>, DOMAIN=<your-domain>, ACME_EMAIL
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# on the server (root, Ubuntu 24.04):
+curl -fsSL https://raw.githubusercontent.com/alkaid040492/nl-regex-platform/main/scripts/server_setup.sh | bash
+# from your machine: copy a filled-in .env (OPENROUTER_API_KEY, FERNET_KEY, DJANGO_SECRET_KEY,
+#                    DJANGO_ALLOWED_HOSTS=<domain>, DOMAIN=<domain>, ACME_EMAIL, DJANGO_DEBUG=0)
+scp .env root@<server>:/opt/nl-regex-platform/.env
+# on the server:
+/opt/nl-regex-platform/scripts/deploy.sh      # re-run any time to pull + rebuild + restart
 ```
+
+`scripts/server_setup.sh` installs Docker if needed, adds swap, opens ports 22/80/443 and
+clones the repo; `scripts/deploy.sh` validates `.env`, runs
+`docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build` and waits
+for the health check.
 
 `docker-compose.prod.yml` adds **Caddy**, which obtains a Let's Encrypt certificate for
 `$DOMAIN` and proxies to the nginx frontend; the dev-only S3Mock and exposed ports are not
