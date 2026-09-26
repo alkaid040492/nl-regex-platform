@@ -32,3 +32,5 @@ Thumbs.db
 
 # assessment brief (not for the public repo)
 docs/*.pdf
+.env.*
+!.env.example
