@@ -31,6 +31,6 @@ scripts/out/
 Thumbs.db
 
 # assessment brief (not for the public repo)
-docs/*.pdf
+docs/
 .env.*
 !.env.example
