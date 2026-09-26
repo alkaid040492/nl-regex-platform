@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/api/client.ts","./src/api/endpoints.ts","./src/api/types.ts","./src/features/connect/connectform.tsx","./src/features/files/filepicker.tsx","./src/features/job/jobform.tsx","./src/features/job/jobprogress.tsx","./src/features/results/resulttable.tsx"],"version":"5.6.3"}

@@ -1,0 +1,6 @@
+ID,Name,Email,Phone,JoinDate,Notes
+1,John Doe,john.doe@example.com,+1-555-123-4567,2024/01/05,Contact via john.doe@example.com after 5pm
+2,Jane Smith,jane_smith@domain.com,(555) 987-6543,2023/11/30,Prefers SMS
+3,Alice Brown,alice.brown@website.org,555.246.8100,2024/03/17,Alt email alice.b@personal.net
+4,Bob Lee,bob@lee.io,+44 20 7946 0958,2022/07/01,
+5,Carol King,carol.king@example.co.uk,555-000-1111,2024/12/25,Card ending 4242

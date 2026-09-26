@@ -1,0 +1,64 @@
+# Local development additions (auto-loaded by `docker compose up`).
+# Adds Adobe S3Mock as a stand-in for S3, exposes ports, mounts source for live reload.
+#
+# Local S3 credentials: any Access Key / Secret Key (e.g. `test` / `test`), bucket `demo`, region us-east-1.
+services:
+  s3mock:
+    image: adobe/s3mock:latest
+    environment:
+      initialBuckets: demo
+      retainFilesOnExit: "true"
+      root: /containers3root
+    ports:
+      - "9090:9090"
+    volumes:
+      - s3mock_data:/containers3root
+
+  s3-seed:
+    build:
+      context: ./backend
+    env_file: .env
+    command: python manage.py seed_s3 --endpoint http://s3mock:9090 --access-key test --secret-key test --bucket demo --source /sample
+    volumes:
+      - ./backend:/app
+      - ./scripts/sample_data:/sample:ro
+    depends_on:
+      - s3mock
+    restart: "no"
+
+  web:
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    environment:
+      SERVICE_ROLE: web
+      DJANGO_DEBUG: "1"
+      S3_ENDPOINT_URL: http://s3mock:9090
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - results_data:/data/results
+    depends_on:
+      - s3mock
+
+  worker:
+    environment:
+      SERVICE_ROLE: worker
+      S3_ENDPOINT_URL: http://s3mock:9090
+    volumes:
+      - ./backend:/app
+      - results_data:/data/results
+    depends_on:
+      - s3mock
+
+  flower:
+    ports:
+      - "5555:5555"
+
+  frontend:
+    ports:
+      - "80:80"
+
+volumes:
+  s3mock_data:

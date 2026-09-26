@@ -1,0 +1,27 @@
+# Production: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Caddy terminates TLS for $DOMAIN and proxies to the frontend nginx.
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+    restart: unless-stopped
+
+  web:
+    environment:
+      SERVICE_ROLE: web
+      DJANGO_DEBUG: "0"
+
+volumes:
+  caddy_data:
+  caddy_config:

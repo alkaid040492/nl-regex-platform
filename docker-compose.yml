@@ -1,0 +1,88 @@
+name: nlregex
+
+x-backend: &backend
+  build:
+    context: ./backend
+  env_file: .env
+  volumes:
+    - results_data:/data/results
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nlregex}
+      POSTGRES_USER: ${POSTGRES_USER:-nlregex}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nlregex}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nlregex} -d ${POSTGRES_DB:-nlregex}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  web:
+    <<: *backend
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 4 --timeout 120 --access-logfile -"
+    environment:
+      SERVICE_ROLE: web
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/health/ >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  worker:
+    <<: *backend
+    # One Spark driver per worker process -> solo pool, concurrency 1. Scale by adding worker containers.
+    command: celery -A config worker --pool=solo --concurrency=1 -E --loglevel=info
+    environment:
+      SERVICE_ROLE: worker
+    # No healthcheck: a solo-pool worker cannot answer pings while a Spark job runs.
+    # Liveness is reported through the Redis heartbeat exposed at /api/health/.
+
+  flower:
+    <<: *backend
+    command: celery -A config flower --port=5555 --url_prefix=flower
+    environment:
+      SERVICE_ROLE: flower
+    volumes: []
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - web
+      - flower
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redis_data:
+  results_data:
