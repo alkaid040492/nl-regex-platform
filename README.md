@@ -7,7 +7,7 @@ ReDoS-safe pattern.
 
 > **Live demo:** https://nlregex-jimmy.duckdns.org — connect with your own AWS Access Key / Secret Key / bucket.
 >
-> **Demo video:** (2.5 min): connecting to S3 with user-entered credentials, an async job running to completion, LLM cache hit, Normalize/Extract transforms, and Flower.
+> **Demo video** (2.5 min): connecting to S3 with user-entered credentials, an async job running to completion, LLM cache hit, Normalize/Extract transforms, and Flower.
 
 https://github.com/user-attachments/assets/f988ffe8-b38a-4ceb-b41b-a9e86edc418f
 
