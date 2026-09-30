@@ -9,7 +9,7 @@ ReDoS-safe pattern.
 >
 > **Demo video** (2.5 min): connecting to S3 with user-entered credentials, an async job running to completion, LLM cache hit, Normalize/Extract transforms, and Flower.
 
-https://github.com/user-attachments/assets/f988ffe8-b38a-4ceb-b41b-a9e86edc418f
+https://github.com/user-attachments/assets/94ee8cb2-90cf-40bb-b773-cb5827c4cd30
 
 | Stack | Django 5 · DRF · Celery 5 · Redis 7 · PostgreSQL 16 · PySpark 3.5 (Hadoop 3.3 / s3a) · DuckDB · React 18 · Vite · Mantine · nginx · Caddy · Flower |
 |---|---|
